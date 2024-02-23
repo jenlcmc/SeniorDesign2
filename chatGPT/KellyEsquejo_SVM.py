@@ -6,15 +6,14 @@ from sklearn import svm
 
 
 # Cross_val_score the three kernels with a 5-fold CV
+def cross_val_for_kernel(kernel, C=1, random_state=42):
+    clf = svm.SVC(kernel=kernel, C=C, random_state=random_state)
+    scores = cross_val_score(clf, X, y, cv=5)
+    return scores
+
 svmAccuracies = {}
-clf = svm.SVC(kernel='linear', C = 1, random_state = 42)
-scores = cross_val_score(clf, X, y, cv = 5)
-svmAccuracies['Linear'] = scores
 
-clf = svm.SVC(kernel='poly', C = 1, random_state = 42)
-scores = cross_val_score(clf, X, y, cv = 5)
-svmAccuracies['Poly:'] = scores
-
-clf = svm.SVC(kernel='rbf', C = 1, random_state = 42)
-scores = cross_val_score(clf, X, y, cv = 5)
-svmAccuracies['Rbf:'] = scores
+kernels = ['linear', 'poly', 'rbf']
+for kernel in kernels:
+    scores = cross_val_for_kernel(kernel)
+    svmAccuracies[kernel.capitalize()] = scores
