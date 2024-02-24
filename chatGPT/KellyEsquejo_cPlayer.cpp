@@ -1,3 +1,4 @@
+//From Stack Overflow
 class cPlayer
 {
 public:
