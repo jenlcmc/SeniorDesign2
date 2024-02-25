@@ -9,6 +9,11 @@ if not os.path.exists("data"):
 
 
 def write_files_to_csv(file_counts, output_file):
+    """
+    Writes filename and modification counts to CSV. Identifies the file with the highest modifications.
+    - dictfiles: Dictionary {filename: modification count}.
+    - file: Base name for the output CSV file.
+    """
     fileOutput = 'data/file_' + file + '.csv'
     rows = ["Filename", "Touches"]
     fileCSV = open(fileOutput, 'w')
@@ -28,6 +33,12 @@ def write_files_to_csv(file_counts, output_file):
 
 # GitHub Authentication function
 def github_auth(url, lsttoken, ct):
+    """
+    Authenticates and fetches data from GitHub API using token rotation.
+    - url: GitHub API URL.
+    - lsttoken: List of authentication tokens.
+    - ct: Current token index, returns updated index and JSON data.
+    """
     jsonData = None
     try:
         ct = ct % len(lstTokens)
@@ -44,6 +55,12 @@ def github_auth(url, lsttoken, ct):
 # @lstTokens, GitHub authentication tokens
 # @repo, GitHub repo
 def countfiles(dictfiles, lsttokens, repo):
+    """
+    Counts modifications per file in a repo by iterating over all commits.
+    - dictfiles: Empty dict for storing counts.
+    - lsttokens: Tokens for GitHub API.
+    - repo: Repository name 'username/repo'.
+    """
     ipage = 1  # url page counter
     ct = 0  # token counter
 
@@ -57,13 +74,15 @@ def countfiles(dictfiles, lsttokens, repo):
             # break out of the while loop if there are no more commits in the pages
             if len(jsonCommits) == 0:
                 break
-            # iterate through the list of commits in  spage
+            # Fetch and process each commit's details including affected files.
             for shaObject in jsonCommits:
                 sha = shaObject['sha']
                 # For each commit, use the GitHub commit API to extract the files touched by the commit
                 shaUrl = 'https://api.github.com/repos/' + repo + '/commits/' + sha
                 shaDetails, ct = github_auth(shaUrl, lsttokens, ct)
                 filesjson = shaDetails['files']
+
+                # Update modification count for each file listed in the commit.
                 for filenameObj in filesjson:
                     filename = filenameObj['filename']
                     dictfiles[filename] = dictfiles.get(filename, 0) + 1
