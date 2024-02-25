@@ -1,51 +1,52 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <type_traits>
+
+using namespace std;
+
+class cStreet {};
+class cHouse {};
+class cComputer {};
+class cBook {};
+
 class cPlayer
 {
 public:
-
+    // Nested struct to store player properties
     struct Properties
     {
-        std::vector<cStreet*>    Streets;
-        std::vector<cHouse*>     Houses;
-        std::vector<cComputer*>  Computers;
-        std::vector<cBook*>      Book;
+        vector<cStreet*>    Streets;    // Vector to store streets owned by the player
+        vector<cHouse*>     Houses;     // Vector to store houses owned by the player
+        vector<cComputer*>  Computers;  // Vector to store computers owned by the player
+        vector<cBook*>      Books;      // Vector to store books owned by the player
     };
 
-    cPlayer(std::string name) : m_name{name}{};
-    ~cPlayer(){};
-    std::string         m_name{};
-    Properties          m_Properties;
+    // Constructor
+    cPlayer(string name) : m_name{name} {}
+    
+    // Destructor
+    ~cPlayer() {}
 
-    // function overloaded
-    void buy(cStreet& Street);
-    void buy(cHouse& House);
-    void buy(cComputer& Computer);
-    void buy(cBook& Book);
-};
+    string         m_name{};        // Player's name
+    Properties     m_Properties;    // Player's properties
 
-void cPlayer::buy(cStreet& Street)
-{
-    std::cout << m_name.c_str() << " : Do you want buy this Street?" << std::endl;
-    //Todo: Decision (here yes)
-    m_Properties.Streets.push_back(&Street);
-};
-
-void cPlayer::buy(cHouse& House)
-{
-    std::cout << m_name.c_str() << " : Do you want buy this House?" << std::endl;
-    //Todo: Decision (here yes)
-    m_Properties.Houses.push_back(&House);
-};
-
-void cPlayer::buy(cComputer& PC)
-{
-    std::cout << m_name.c_str() << " : Do you want buy this PC?" << std::endl;
-    //Todo: Decision (here yes)
-    m_Properties.Computers.push_back(&PC);
-};
-
-void cPlayer::buy(cBook& Book)
-{
-    std::cout << m_name.c_str() << " : Do you want buy this Book?" << std::endl;
-    //Todo: Decision (here yes)
-    m_Properties.Book.push_back(&Book);
+    // Function to buy an item
+    template<typename T>
+    void buy(T& item, const string& itemName)
+    {
+        // Prompt the player to buy the item
+        cout << m_name << " : Do you want to buy this " << itemName << "?" << endl;
+        
+        // Check the type of item and add it to the corresponding vector in player properties
+        if (is_same_v<T, cStreet>) {
+            m_Properties.Streets.push_back(&item);
+        } else if (is_same_v<T, cHouse>) {
+            m_Properties.Houses.push_back(&item);
+        } else if (is_same_v<T, cComputer>) {
+            m_Properties.Computers.push_back(&item);
+        } else if (is_same_v<T, cBook>) {
+            m_Properties.Books.push_back(&item);
+        }
+    }
 };
