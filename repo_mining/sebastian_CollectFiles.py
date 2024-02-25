@@ -14,22 +14,26 @@ def write_files_to_csv(file_counts, output_file):
     - dictfiles: Dictionary {filename: modification count}.
     - file: Base name for the output CSV file.
     """
-    fileOutput = 'data/file_' + file + '.csv'
-    rows = ["Filename", "Touches"]
-    fileCSV = open(fileOutput, 'w')
-    writer = csv.writer(fileCSV)
-    writer.writerow(rows)
+    # Construct the output file path
+    file_output = f'data/{output_file}_file_touches.csv'
+    # Use a context manager to handle file operations
+    with open(file_output, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Filename", "Touches"])  # Write the header row
 
-    bigcount = None
-    bigfilename = None
-    for filename, count in dictfiles.items():
-        rows = [filename, count]
-        writer.writerow(rows)
-        if bigcount is None or count > bigcount:
-            bigcount = count
-            bigfilename = filename
-    fileCSV.close()
-    print('The file ' + bigfilename + ' has been touched ' + str(bigcount) + ' times.')
+        # Find the file with the highest count (if dict is not empty)
+        if file_counts:
+            bigfilename, bigcount = max(file_counts.items(), key=lambda x: x[1])
+            # Write each file count to the CSV
+            for filename, count in file_counts.items():
+                writer.writerow([filename, count])
+        else:
+            bigfilename, bigcount = None, None
+
+    if bigfilename and bigcount is not None:
+        print(f'The file {bigfilename} has been touched {bigcount} times.')
+    else:
+        print("No files to report.")
 
 # GitHub Authentication function
 def github_auth(url, lsttoken, ct):
