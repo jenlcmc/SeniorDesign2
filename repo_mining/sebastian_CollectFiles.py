@@ -7,8 +7,42 @@ import os
 if not os.path.exists("data"):
  os.makedirs("data")
 
+
+def write_files_to_csv(file_counts, output_file):
+    """
+    Writes filename and modification counts to CSV. Identifies the file with the highest modifications.
+    - dictfiles: Dictionary {filename: modification count}.
+    - file: Base name for the output CSV file.
+    """
+    # Construct the output file path
+    file_output = f'data/{output_file}_file_touches.csv'
+    # Use a context manager to handle file operations
+    with open(file_output, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Filename", "Touches"])  # Write the header row
+
+        # Find the file with the highest count (if dict is not empty)
+        if file_counts:
+            bigfilename, bigcount = max(file_counts.items(), key=lambda x: x[1])
+            # Write each file count to the CSV
+            for filename, count in file_counts.items():
+                writer.writerow([filename, count])
+        else:
+            bigfilename, bigcount = None, None
+
+    if bigfilename and bigcount is not None:
+        print(f'The file {bigfilename} has been touched {bigcount} times.')
+    else:
+        print("No files to report.")
+
 # GitHub Authentication function
 def github_auth(url, lsttoken, ct):
+    """
+    Authenticates and fetches data from GitHub API using token rotation.
+    - url: GitHub API URL.
+    - lsttoken: List of authentication tokens.
+    - ct: Current token index, returns updated index and JSON data.
+    """
     jsonData = None
     try:
         ct = ct % len(lstTokens)
@@ -25,6 +59,12 @@ def github_auth(url, lsttoken, ct):
 # @lstTokens, GitHub authentication tokens
 # @repo, GitHub repo
 def countfiles(dictfiles, lsttokens, repo):
+    """
+    Counts modifications per file in a repo by iterating over all commits.
+    - dictfiles: Empty dict for storing counts.
+    - lsttokens: Tokens for GitHub API.
+    - repo: Repository name 'username/repo'.
+    """
     ipage = 1  # url page counter
     ct = 0  # token counter
 
@@ -38,13 +78,15 @@ def countfiles(dictfiles, lsttokens, repo):
             # break out of the while loop if there are no more commits in the pages
             if len(jsonCommits) == 0:
                 break
-            # iterate through the list of commits in  spage
+            # Fetch and process each commit's details including affected files.
             for shaObject in jsonCommits:
                 sha = shaObject['sha']
                 # For each commit, use the GitHub commit API to extract the files touched by the commit
                 shaUrl = 'https://api.github.com/repos/' + repo + '/commits/' + sha
                 shaDetails, ct = github_auth(shaUrl, lsttokens, ct)
                 filesjson = shaDetails['files']
+
+                # Update modification count for each file listed in the commit.
                 for filenameObj in filesjson:
                     filename = filenameObj['filename']
                     dictfiles[filename] = dictfiles.get(filename, 0) + 1
@@ -64,29 +106,14 @@ repo = 'scottyab/rootbeer'
 # Remember to empty the list when going to commit to GitHub.
 # Otherwise they will all be reverted and you will have to re-create them
 # I would advise to create more than one token for repos with heavy commits
-lstTokens = ["fd02a694b606c4120b8ca7bbe7ce29229376ee",
-                "16ce529bdb32263fb90a392d38b5f53c7ecb6b",
-                "8cea5715051869e98044f38b60fe897b350d4a"]
 
-dictfiles = dict()
-countfiles(dictfiles, lstTokens, repo)
-print('Total number of files: ' + str(len(dictfiles)))
+if __name__ == '__main__':
+    lstTokens = ["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"]
 
-file = repo.split('/')[1]
-# change this to the path of your file
-fileOutput = 'data/file_' + file + '.csv'
-rows = ["Filename", "Touches"]
-fileCSV = open(fileOutput, 'w')
-writer = csv.writer(fileCSV)
-writer.writerow(rows)
+    dictfiles = dict()
+    countfiles(dictfiles, lstTokens, repo)
+    print('Total number of files: ' + str(len(dictfiles)))
 
-bigcount = None
-bigfilename = None
-for filename, count in dictfiles.items():
-    rows = [filename, count]
-    writer.writerow(rows)
-    if bigcount is None or count > bigcount:
-        bigcount = count
-        bigfilename = filename
-fileCSV.close()
-print('The file ' + bigfilename + ' has been touched ' + str(bigcount) + ' times.')
+    file = repo.split('/')[1]
+    file_output = f'data/file_{file}.csv'
+    write_files_to_csv(dictfiles, file_output)
